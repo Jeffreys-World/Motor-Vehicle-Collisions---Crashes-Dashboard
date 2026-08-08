@@ -16,3 +16,9 @@ pytest>=8.3
 
 # Reading the legacy .xlsx sample
 openpyxl>=3.1
+
+# Reads .env for scripts/pull_data.py
+python-dotenv>=1.0
+
+# Uses the OS cert store; needed on TLS-intercepting networks
+truststore>=0.10

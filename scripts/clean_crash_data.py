@@ -39,12 +39,16 @@ def clean_crash_data(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     df = df.copy()
 
     # --- Dates & times: Excel serial numbers -> real datetime ---------------
-    if np.issubdtype(df["crash_date"].dtype, np.number):
+    # pd.api.types.is_numeric_dtype, not np.issubdtype: pandas 3 defaults to
+    # pyarrow-backed StringDtype, which np.issubdtype cannot interpret and which
+    # raises "Cannot interpret '<StringDtype(na_value=nan)>' as a data type".
+    # The Excel sample this was written against never exercised that path.
+    if pd.api.types.is_numeric_dtype(df["crash_date"]):
         dates = pd.to_datetime(df["crash_date"], unit="D", origin="1899-12-30")
     else:
         dates = pd.to_datetime(df["crash_date"], errors="coerce")
 
-    if np.issubdtype(df["crash_time"].dtype, np.number):
+    if pd.api.types.is_numeric_dtype(df["crash_time"]):
         secs = (df["crash_time"] * 24 * 3600).round().astype("Int64")
         time_str = pd.to_datetime(secs, unit="s", errors="coerce").dt.strftime("%H:%M")
     else:
@@ -70,20 +74,19 @@ def clean_crash_data(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         df[col] = df[col].apply(lambda v: str(v).strip() if pd.notna(v) else pd.NA)
         df[col] = df[col].replace({"": pd.NA, "nan": pd.NA})
 
-    # --- Borough / zip: leave missing as missing (do not guess) --------------
-    missing_borough = df["borough"].isna().sum()
-    missing_zip = df["zip_code"].isna().sum()
-    recoverable_via_geocoding = int(
-        (df["borough"].isna() & df["latitude"].notna() & df["longitude"].notna()).sum()
-    )
-    df["zip_code"] = df["zip_code"].apply(
-        lambda v: str(int(v)) if pd.notna(v) else pd.NA
-    )
-    log["missing_borough"] = int(missing_borough)
-    log["missing_zip_code"] = int(missing_zip)
-    log["borough_missing_but_recoverable_via_lat_long"] = recoverable_via_geocoding
+    # --- Coordinates FIRST: coerce, then scrub, then flag -------------------
+    # Order matters and used to be wrong. The "recoverable via lat/long" count
+    # below must be computed AFTER bad coordinates are nulled, or it counts
+    # (0,0) and out-of-bounds rows as recoverable and inflates the headline
+    # number this project is built on.
+    #
+    # Coercion is not optional either: the Socrata API returns every numeric as
+    # a STRING, so without this the comparison below is `str < float` on an
+    # object-dtype Series and raises TypeError on the real pull. The old code
+    # only ever saw an Excel sample, where pandas had already inferred floats.
+    for col in ("latitude", "longitude"):
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # --- Coordinates: null out (0,0)/out-of-bounds, add a usability flag -----
     bad_coord = (
         df["latitude"].notna()
         & df["longitude"].notna()
@@ -93,8 +96,29 @@ def clean_crash_data(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         )
     )
     log["invalid_coordinates_nulled"] = int(bad_coord.sum())
-    df.loc[bad_coord, ["latitude", "longitude", "location"]] = np.nan
+    cols_to_null = [c for c in ("latitude", "longitude", "location") if c in df.columns]
+    df.loc[bad_coord, cols_to_null] = np.nan
     df["has_valid_location"] = df["latitude"].notna() & df["longitude"].notna()
+
+    # --- Borough / zip: leave missing as missing (do not guess) --------------
+    missing_borough = df["borough"].isna().sum()
+    missing_zip = df["zip_code"].isna().sum()
+    # Computed against SCRUBBED coordinates. This is the instrument behind the
+    # project's headline claim, so it must not count coordinates we just nulled.
+    recoverable_via_geocoding = int(
+        (df["borough"].isna() & df["has_valid_location"]).sum()
+    )
+    # A zip that will not parse becomes missing rather than killing a 20-minute
+    # pull at its final step. One malformed value in 812,318 rows should not
+    # cost the whole run.
+    zip_numeric = pd.to_numeric(df["zip_code"], errors="coerce")
+    log["zip_codes_unparseable"] = int(zip_numeric.isna().sum() - df["zip_code"].isna().sum())
+    df["zip_code"] = zip_numeric.apply(
+        lambda v: f"{int(v):05d}" if pd.notna(v) else pd.NA
+    )
+    log["missing_borough"] = int(missing_borough)
+    log["missing_zip_code"] = int(missing_zip)
+    log["borough_missing_but_recoverable_via_lat_long"] = recoverable_via_geocoding
 
     # --- Injury/fatality counts: force numeric, missing -> 0 (assumption) ----
     for col in COUNT_COLS:
@@ -106,12 +130,27 @@ def clean_crash_data(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     # --- Sparse-by-design columns: leave untouched, just document ------------
     log["sparse_by_design_columns"] = FACTOR_COLS[1:] + VEHICLE_COLS[1:]
 
+    # `location` is deliberately absent: it duplicates latitude/longitude, no
+    # chart reads it, and its embedded newlines make CSV line counts overcount
+    # records by ~2.9x, which has already caused one wrong size estimate.
     col_order = [
         "collision_id", "crash_date", "crash_time", "crash_datetime",
-        "borough", "zip_code", "latitude", "longitude", "has_valid_location", "location",
+        "borough", "borough_recovered", "borough_source",
+        "zip_code", "latitude", "longitude", "has_valid_location",
         "on_street_name", "cross_street_name", "off_street_name",
         *COUNT_COLS, *FACTOR_COLS, *VEHICLE_COLS,
     ]
+    # This used to be a silent allowlist: `df[[c for c in col_order if c in
+    # df.columns]]` dropped any column not named above without a word. That
+    # would have silently deleted borough_recovered/borough_source on a re-run
+    # after the recovery, destroying the finding's own columns. Now it says so.
+    unexpected = [c for c in df.columns if c not in col_order and c != "location"]
+    if unexpected:
+        raise ValueError(
+            f"unexpected column(s) not in col_order: {unexpected}. "
+            "Add them to col_order deliberately rather than letting them be "
+            "dropped silently."
+        )
     df = df[[c for c in col_order if c in df.columns]]
 
     log["output_rows"] = len(df)
