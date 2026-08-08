@@ -99,12 +99,21 @@ Microsoft Store stub. `py` is used in docs only, never inside a script or CI wor
 
 | Stage | Status |
 |---|---|
-| Repo scaffold, deployable placeholder app | **done** |
-| `pull_data.py`, stable-ordered multi-year pull | in progress |
-| Cleaner hardened for API dtypes and ragged chunks | in progress |
+| Repo scaffold, deployable app | **done** |
+| `pull_data.py`, stable-ordered multi-year pull | **done** — 812,318 rows, count matches the API exactly |
+| Cleaner hardened for API dtypes and coordinate scrub | **done** — four bugs fixed |
+| Nine charts: line, categorical, heatmaps, geo, scatter | **done** |
+| Data shipped (16.9 MB Parquet, 2019-2025) | **done** |
 | Borough recovery + agreement check (build gate) | not started |
-| Nine charts: line, categorical, heatmaps, scatter | not started |
 | Live on Streamlit Community Cloud | not started |
+
+### A note on scope, because two numbers differ
+
+The headline above (30.5% of crashes, 39.8% of deaths, 1.51x) is measured across
+the **full table, 2012-2026**. The app ships the **2019-2025** slice, where the same
+measurements come out **32.1%, 44.2% and 1.67x**. Both are correct for their range;
+the gap has widened over time. The app labels its own range, and no number is quoted
+outside the range it was computed on.
 
 ## License
 

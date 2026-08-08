@@ -10,14 +10,21 @@ venv/
 *.egg-info/
 
 # Data
-# Raw pulls and the working Parquet stay local until the schema is frozen.
-# See design decision 16: one Parquet commit, after the borough join lands.
+# Raw pulls and intermediate CSVs stay local: 336 MB, and GitHub blocks >100 MB.
+#
+# NOTE the star: `data/processed/*`, not `data/processed/`. Git never descends
+# into an excluded DIRECTORY, so a `!` negation could never rescue a file inside
+# one — the earlier `!data/processed/finding_aggregate.csv` line was dead for
+# exactly that reason. Excluding the CONTENTS instead keeps negation possible.
 data/raw/
-data/processed/
+data/processed/*
 *.parquet
 
-# Committed by exception once the schema is frozen (decision 17):
-# a few-KB aggregate the tests assert against and FINDING.md cites.
+# Committed by exception. Last matching pattern wins, so these come after.
+# crashes.parquet ships so the deployed app has data (16.9 MB, under the 50 MB
+# warning). This overrides design decision 16's "one commit after the schema is
+# frozen" — a working live URL was judged worth one superseded blob.
+!data/processed/crashes.parquet
 !data/processed/finding_aggregate.csv
 
 # OS
