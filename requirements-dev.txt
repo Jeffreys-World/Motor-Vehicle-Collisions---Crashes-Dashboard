@@ -1,0 +1,18 @@
+# DEV dependencies. Never installed on Streamlit Community Cloud.
+# Install with:  py -m pip install -r requirements.txt -r requirements-dev.txt
+
+-r requirements.txt
+
+# Data pull
+requests>=2.32
+
+# Offline borough recovery (point-in-polygon). Heavy: pulls GDAL/shapely/pyproj.
+# Runs on your machine only.
+geopandas>=1.0
+shapely>=2.0
+
+# Tests
+pytest>=8.3
+
+# Reading the legacy .xlsx sample
+openpyxl>=3.1

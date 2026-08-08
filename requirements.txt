@@ -1,0 +1,14 @@
+# RUNTIME dependencies only. This is what Streamlit Community Cloud installs.
+# Keep it minimal: the container has ~1 GB of RAM.
+#
+# Do NOT add geopandas / GDAL / shapely here. The point-in-polygon join runs
+# OFFLINE on a laptop (design decision 1) and its output is baked into the
+# committed Parquet. Shipping the geo stack to Community Cloud is a common
+# build failure for zero runtime benefit. Dev-only deps live in
+# requirements-dev.txt.
+
+streamlit>=1.40,<2
+duckdb>=1.1,<2
+pyarrow>=17
+pandas>=2.2
+plotly>=5.24

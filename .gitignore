@@ -1,0 +1,25 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Data
+# Raw pulls and the working Parquet stay local until the schema is frozen.
+# See design decision 16: one Parquet commit, after the borough join lands.
+data/raw/
+data/processed/
+*.parquet
+
+# Committed by exception once the schema is frozen (decision 17):
+# a few-KB aggregate the tests assert against and FINDING.md cites.
+!data/processed/finding_aggregate.csv
+
+# OS
+.DS_Store
+Thumbs.db
