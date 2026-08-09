@@ -1,0 +1,38 @@
+{
+  "input_rows": 812318,
+  "date_range": [
+    "2019-01-01",
+    "2025-12-31"
+  ],
+  "rows_per_year": {
+    "2019": 211486,
+    "2020": 112918,
+    "2021": 110558,
+    "2022": 103887,
+    "2023": 96607,
+    "2024": 91316,
+    "2025": 85546
+  },
+  "duplicate_rows_dropped": 3,
+  "invalid_coordinates_nulled": 5946,
+  "zip_codes_unparseable": 0,
+  "missing_borough": 261117,
+  "missing_zip_code": 261238,
+  "borough_missing_but_recoverable_via_lat_long": 213246,
+  "count_columns_filled_with_zero": {
+    "number_of_persons_injured": 1,
+    "number_of_persons_killed": 4
+  },
+  "sparse_by_design_columns": [
+    "contributing_factor_vehicle_2",
+    "contributing_factor_vehicle_3",
+    "contributing_factor_vehicle_4",
+    "contributing_factor_vehicle_5",
+    "vehicle_type_code2",
+    "vehicle_type_code_3",
+    "vehicle_type_code_4",
+    "vehicle_type_code_5"
+  ],
+  "output_rows": 812315,
+  "output_columns": 30
+}

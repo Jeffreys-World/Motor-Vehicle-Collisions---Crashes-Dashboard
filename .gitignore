@@ -27,6 +27,11 @@ data/processed/*
 !data/processed/crashes.parquet
 !data/processed/finding_aggregate.csv
 
+# The cleaning log: 952 bytes of provenance for every number in the README, and
+# the artifact CLAUDE.md's year-skew regression test is specified to assert
+# against. Without it committed, that test cannot be written at all.
+!data/processed/crashes_cleaned_log.json
+
 # OS
 .DS_Store
 Thumbs.db
