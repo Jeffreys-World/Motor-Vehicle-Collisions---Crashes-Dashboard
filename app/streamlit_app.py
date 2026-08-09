@@ -17,8 +17,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from data import (DATA_THROUGH, PULLED_ON, build_view, date_bounds,
-                  get_connection, normalize_date_range, query, resolve_source)
+from data import (PULLED_ON, UPSTREAM_THROUGH, UPSTREAM_UPDATED, build_view,
+                  date_bounds, get_connection, normalize_date_range, query,
+                  resolve_source)
 
 st.set_page_config(page_title="NYC crash data: the borough gap",
                    page_icon="🚦", layout="wide")
@@ -63,8 +64,23 @@ kpi = query(con, "kpis", key).iloc[0]
 
 # ----------------------------------------------------------------- the claim
 st.title("The borough bar chart drops 40% of NYC's traffic deaths")
-st.caption(f"Snapshot: data through {DATA_THROUGH}, pulled {PULLED_ON}. "
-           f"NYC's feed was last updated 2026-06-15.")
+# Coverage is read off the SELECTED RANGE, not a hardcoded constant and not the
+# full data bounds. Hardcoding produced a header claiming "data through
+# 2026-06-11" above charts that stopped in 2025 (ISSUE-002), and using lo/hi
+# would disagree with the KPIs as soon as anyone moved the filter.
+st.caption(
+    f"Showing **{date_from:%b %Y} to {date_to:%b %Y}** "
+    f"({int(kpi.crashes):,} crashes). Pulled {PULLED_ON}; the source dataset "
+    f"runs to {UPSTREAM_THROUGH} and NYC last updated it {UPSTREAM_UPDATED}."
+)
+# Reconciles the headline with the KPI below it. 40% is the full-table figure;
+# this page shows a narrower range where the gap is wider. Without this line a
+# visitor reads "40%" and "44.2%" side by side and trusts neither (ISSUE-001).
+st.caption(
+    "The 40% in the headline is measured across the full 2012-2026 table "
+    "(39.8%). The range shown here is narrower, and the gap is wider in it — "
+    "the figure to its right is for this range."
+)
 
 if not src.trustworthy:
     st.error(
@@ -85,7 +101,7 @@ a, b, c, d = st.columns(4)
 a.metric("Crashes", f"{int(kpi.crashes):,}")
 b.metric("Injured", f"{int(kpi.injured):,}")
 c.metric("Killed", f"{int(kpi.killed):,}")
-d.metric("Deaths in unlabeled rows", f"{death_share:.1%}",
+d.metric("Deaths in unlabeled rows, this range", f"{death_share:.1%}",
          f"{int(kpi.unlabeled_killed):,} of {int(kpi.killed):,}",
          delta_color="inverse")
 

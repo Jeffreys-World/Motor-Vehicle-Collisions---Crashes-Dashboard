@@ -47,7 +47,14 @@ FIXTURE = ROOT / "data" / "raw" / "sample_8k_skewed.csv"
 # Static by design. Never fetch rowsUpdatedAt at runtime and never render a
 # counter that grows over time — it becomes an abandonment signal on a link
 # somebody opens months from now.
-DATA_THROUGH = "2026-06-11"
+#
+# UPSTREAM_THROUGH describes the SOURCE dataset, not what this app ships. Do not
+# show it as the app's coverage: the shipped slice is 2019-2025, so a header
+# reading "data through 2026-06-11" over charts that stop in 2025 is simply
+# false. Coverage is derived from the data itself (see date_bounds).
+# Found by /qa on 2026-08-09 (ISSUE-002).
+UPSTREAM_THROUGH = "2026-06-11"
+UPSTREAM_UPDATED = "2026-06-15"
 PULLED_ON = "2026-08-08"
 
 
