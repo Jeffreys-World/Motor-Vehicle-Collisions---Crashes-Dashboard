@@ -17,9 +17,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from data import (PULLED_ON, UPSTREAM_THROUGH, UPSTREAM_UPDATED, build_view,
-                  date_bounds, get_connection, normalize_date_range, query,
-                  resolve_source)
+from data import (FULL_TABLE_DEATH_SHARE, PULLED_ON, UPSTREAM_THROUGH,
+                  UPSTREAM_UPDATED, build_view, date_bounds, gap_direction,
+                  get_connection, normalize_date_range, query, resolve_source)
 
 st.set_page_config(page_title="NYC crash data: the borough gap",
                    page_icon="🚦", layout="wide")
@@ -73,15 +73,6 @@ st.caption(
     f"({int(kpi.crashes):,} crashes). Pulled {PULLED_ON}; the source dataset "
     f"runs to {UPSTREAM_THROUGH} and NYC last updated it {UPSTREAM_UPDATED}."
 )
-# Reconciles the headline with the KPI below it. 40% is the full-table figure;
-# this page shows a narrower range where the gap is wider. Without this line a
-# visitor reads "40%" and "44.2%" side by side and trusts neither (ISSUE-001).
-st.caption(
-    "The 40% in the headline is measured across the full 2012-2026 table "
-    "(39.8%). The range shown here is narrower, and the gap is wider in it — "
-    "the figure to its right is for this range."
-)
-
 if not src.trustworthy:
     st.error(
         f"**Running on the {src.label}, not real data.** Every number on this page "
@@ -96,6 +87,16 @@ if kpi.crashes == 0:
 
 unlabeled_share = kpi.unlabeled_crashes / kpi.crashes
 death_share = (kpi.unlabeled_killed / kpi.killed) if kpi.killed else 0.0
+
+# Reconciles the headline with the KPI directly beneath it: 40% is the
+# full-table figure, the KPI is this range (ISSUE-001). The DIRECTION is
+# computed by data.gap_direction, never written down here — see that function
+# for why, and tests/test_gap_direction.py for the lock.
+st.caption(
+    f"The 40% in the headline is measured across the full 2012-2026 table "
+    f"({FULL_TABLE_DEATH_SHARE:.1%}). The gap is {gap_direction(death_share)} "
+    f"— the figure on the right is for this range."
+)
 
 a, b, c, d = st.columns(4)
 a.metric("Crashes", f"{int(kpi.crashes):,}")

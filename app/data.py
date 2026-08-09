@@ -57,6 +57,17 @@ UPSTREAM_THROUGH = "2026-06-11"
 UPSTREAM_UPDATED = "2026-06-15"
 PULLED_ON = "2026-08-08"
 
+# The full-table (2012-2026) share of deaths that fall in unlabeled rows — the
+# figure the headline's "40%" rounds. Static by design: it describes the SOURCE
+# table, not the shipped 2019-2025 slice. Only ever COMPARED against the live
+# per-range figure, never presented as describing what is on screen.
+FULL_TABLE_DEATH_SHARE = 0.398
+
+# Below this, the two figures are called equal rather than ranked. Half a
+# percentage point: narrow enough that a real gap still reads as a gap, wide
+# enough that float noise never flips the wording.
+GAP_EQUAL_TOLERANCE = 0.005
+
 
 @dataclass(frozen=True)
 class Source:
@@ -141,6 +152,32 @@ def normalize_date_range(picked, lo, hi):
     if picked is None:
         return lo, hi
     return picked, picked
+
+
+def gap_direction(death_share: float,
+                  full_table_share: float = FULL_TABLE_DEATH_SHARE,
+                  tolerance: float = GAP_EQUAL_TOLERANCE) -> str:
+    """Which way the selected range's death gap runs against the full table.
+
+    Extracted so it can be tested without a browser, the same reason
+    normalize_date_range lives here: streamlit_app.py executes at module scope,
+    so a test cannot import anything defined in it.
+
+    The page used to STATE the direction — "the range shown here is narrower,
+    and the gap is wider in it" — directly above the live figure. That sentence
+    is false on 40% of month-length ranges, on half of all single days, and on
+    the whole of 2025 (31.0% against 39.8%). A hardcoded directional claim
+    inches from the number that contradicts it is precisely the bug the caption
+    was written to fix (ISSUE-001). Found by /qa on 2026-08-09.
+
+    Returns the words, not a sign, so the call site cannot re-introduce the
+    claim by mapping the sign back to prose incorrectly.
+    """
+    gap = death_share - full_table_share
+    if abs(gap) < tolerance:
+        return "about the same in the range shown here"
+    return ("wider in the range shown here" if gap > 0
+            else "narrower in the range shown here")
 
 
 def read_sql(name: str) -> str:
