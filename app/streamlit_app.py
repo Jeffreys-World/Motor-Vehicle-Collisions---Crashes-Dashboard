@@ -187,6 +187,18 @@ fig = px.line(mon, x="month", y=["crashes", "injured"],
               labels={"value": "Count", "month": "", "variable": ""})
 fig.update_layout(height=320, margin=dict(t=10))
 st.plotly_chart(fig)
+# Charts 4 and 7 were the only two on the page with no caption, so a screen
+# reader reached them and got nothing at all — st.plotly_chart exposes no
+# alt text and Plotly's SVG output is unlabelled, which makes the adjacent
+# caption the only text alternative available. Found by /qa on 2026-08-09
+# (ISSUE-007). Deliberately carries no figure: this sits under a date filter
+# that changes every number on the page, and a static one would be ISSUE-001
+# again.
+st.caption("Raw monthly counts, unsmoothed and unindexed. This is the volume "
+           "chart 3 is built from — chart 3 rebases all three series to a "
+           "common start so their shapes can be compared, which is what makes "
+           "the divergence visible. Read this one for magnitude, that one for "
+           "the argument.")
 
 st.divider()
 
@@ -231,6 +243,13 @@ else:
                     labels=dict(x="Hour", y="", color="Crashes"))
     fig.update_layout(height=360, margin=dict(t=10))
     st.plotly_chart(fig)
+    # See the note on chart 4's caption (ISSUE-007). Phrased as what the chart
+    # cannot show rather than as a measurement, so it stays true under every
+    # date filter — the severity claim it gestures at is real on the full
+    # slice but is not what this grid plots.
+    st.caption("Counts only, every crash weighted equally. This answers when "
+               "crashes happen, not how bad they are: a dark cell here can "
+               "still be a deadlier hour per crash than a bright one.")
 
 # ------------------------------------------------------- 8-9. geography
 st.subheader("8. Where crashes cluster")
