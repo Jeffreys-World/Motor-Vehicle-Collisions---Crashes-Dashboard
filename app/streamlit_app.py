@@ -102,9 +102,16 @@ a, b, c, d = st.columns(4)
 a.metric("Crashes", f"{int(kpi.crashes):,}")
 b.metric("Injured", f"{int(kpi.injured):,}")
 c.metric("Killed", f"{int(kpi.killed):,}")
+# delta_arrow="off" is load-bearing, not cosmetic. The delta slot carries a
+# COMPOSITION ("830 of 1,877"), not a change, and Streamlit's default parses the
+# leading number, decides it is positive, and renders an upward arrow. A reader
+# sees "up 830" and infers a rise against some earlier period that this page
+# never shows. On a one-day range it renders "up 0 of 1", which is an arrow
+# pointing up next to a zero. Found by /qa on 2026-08-09 (ISSUE-006).
+# The inverse colour stays: the figure is bad news and should read as bad news.
 d.metric("Deaths in unlabeled rows, this range", f"{death_share:.1%}",
          f"{int(kpi.unlabeled_killed):,} of {int(kpi.killed):,}",
-         delta_color="inverse")
+         delta_color="inverse", delta_arrow="off")
 
 st.divider()
 
