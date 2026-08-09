@@ -18,7 +18,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from data import (DATA_THROUGH, PULLED_ON, build_view, date_bounds,
-                  get_connection, query, resolve_source)
+                  get_connection, normalize_date_range, query, resolve_source)
 
 st.set_page_config(page_title="NYC crash data: the borough gap",
                    page_icon="🚦", layout="wide")
@@ -50,20 +50,10 @@ with st.sidebar:
         help=f"Data covers {lo:%Y-%m-%d} to {hi:%Y-%m-%d}. Bounds come from the "
              f"data, not from today.",
     )
-    # st.date_input in range mode returns a 1-TUPLE between the first and second
-    # click. Unpacking straight into two names raises
-    # "ValueError: not enough values to unpack (expected 2, got 1)" and replaces
-    # the whole dashboard with a traceback — on the first click of the only
-    # filter in the app. Normalise the shape BEFORE unpacking, not after.
-    if isinstance(picked, (list, tuple)):
-        if len(picked) >= 2:
-            date_from, date_to = picked[0], picked[1]
-        elif len(picked) == 1:
-            date_from = date_to = picked[0]   # mid-selection: show that one day
-        else:
-            date_from, date_to = lo, hi       # cleared: fall back to full range
-    else:
-        date_from = date_to = picked          # single date object
+    # Normalise BEFORE unpacking. st.date_input returns a 1-tuple mid-selection
+    # and unpacking it directly crashed the whole page. See normalize_date_range
+    # in data.py, and tests/test_date_range.py which locks the behaviour.
+    date_from, date_to = normalize_date_range(picked, lo, hi)
     st.caption(f"Source: {src.label}")
 
 build_view(con, date_from, date_to)

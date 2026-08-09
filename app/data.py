@@ -108,6 +108,34 @@ def _ensure_recovery_columns(con: duckdb.DuckDBPyConnection) -> None:
     )
 
 
+def normalize_date_range(picked, lo, hi):
+    """Coerce whatever st.date_input returns into exactly (date_from, date_to).
+
+    Extracted so it can be tested without a browser. In range mode
+    st.date_input returns a 1-TUPLE between the first and second click, and
+    unpacking that straight into two names raises
+
+        ValueError: not enough values to unpack (expected 2, got 1)
+
+    which replaced the entire dashboard with a traceback on the first click of
+    the only filter in the app. Found by /qa on 2026-08-09.
+
+        two dates  -> (a, b)
+        one date   -> (a, a)     mid-selection: show that single day
+        cleared    -> (lo, hi)   fall back to the full range
+        bare date  -> (d, d)
+    """
+    if isinstance(picked, (list, tuple)):
+        if len(picked) >= 2:
+            return picked[0], picked[1]
+        if len(picked) == 1:
+            return picked[0], picked[0]
+        return lo, hi
+    if picked is None:
+        return lo, hi
+    return picked, picked
+
+
 def read_sql(name: str) -> str:
     return (SQL_DIR / f"{name}.sql").read_text(encoding="utf-8")
 
