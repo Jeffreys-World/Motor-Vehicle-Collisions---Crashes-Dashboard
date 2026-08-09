@@ -7,7 +7,17 @@
 # build failure for zero runtime benefit. Dev-only deps live in
 # requirements-dev.txt.
 
-streamlit>=1.40,<2
+# Floor raised from 1.40 by /qa on 2026-08-09 (ISSUE-005). The nine
+# st.plotly_chart calls used use_container_width=True, which is deprecated with
+# a removal date of 2025-12-31 that has already passed. Community Cloud
+# auto-redeploys on every push, so a release inside the old `<2` pin would have
+# removed it and broken all nine charts with no code change on our side.
+#
+# The calls now pass nothing and rely on width defaulting to "stretch". That
+# default does not exist at 1.40 — there, a bare st.plotly_chart(fig) renders at
+# natural width instead of filling the column — so the floor has to move with
+# the call sites or the fix becomes a silent layout regression.
+streamlit>=1.61,<2
 duckdb>=1.1,<2
 pyarrow>=17
 pandas>=2.2

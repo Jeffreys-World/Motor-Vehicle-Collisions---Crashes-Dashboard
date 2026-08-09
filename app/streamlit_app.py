@@ -121,7 +121,7 @@ fig = px.bar(bor, x="borough", y="crashes",
                                  "Borough recorded": C_LABELED},
              labels={"crashes": "Crashes", "borough": "", "color": ""})
 fig.update_layout(height=380, legend_title_text="", margin=dict(t=10))
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig)
 
 lab = bor[~bor.is_unlabeled]
 unl = bor[bor.is_unlabeled]
@@ -142,7 +142,7 @@ else:
                  orientation="h", labels={"crashes": "Crashes", "street": ""})
     fig.update_traces(marker_color=C_UNLABELED)
     fig.update_layout(height=380, margin=dict(t=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
     st.caption("Limited-access highways, which sit outside the precinct street "
                "grid that assigns a borough. The gap is structural, not random.")
 
@@ -166,7 +166,7 @@ if len(yr) > 1:
                           "year": "", "series": ""})
     fig.add_hline(y=100, line_dash="dot", line_color="#999")
     fig.update_layout(height=380, margin=dict(t=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
     st.caption("A crash-volume line alone invites 'the streets got safer'. Indexing "
                "all three against the same baseline shows reported crashes falling "
                "far faster than deaths, which points at reporting, not safety.")
@@ -179,7 +179,7 @@ fig = px.line(mon, x="month", y=["crashes", "injured"],
               color_discrete_sequence=[C_CRASH, C_INJURY],
               labels={"value": "Count", "month": "", "variable": ""})
 fig.update_layout(height=320, margin=dict(t=10))
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig)
 
 st.divider()
 
@@ -192,7 +192,7 @@ with left:
                  orientation="h", labels={"crashes": "Crashes", "factor": ""})
     fig.update_traces(marker_color=C_CRASH)
     fig.update_layout(height=420, margin=dict(t=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
     st.caption("'Unspecified' is consistently near the top. Another place this "
                "dataset records an absence rather than a cause.")
 
@@ -204,7 +204,7 @@ with right:
     fig.add_bar(name="Killed", x=vic.victim_type, y=vic.killed, marker_color=C_DEATH)
     fig.update_layout(barmode="group", height=420, margin=dict(t=10),
                       yaxis_type="log", yaxis_title="Count (log scale)")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
     st.caption("Log scale: deaths are ~0.16% of crashes, so a linear axis renders "
                "the fatality bars invisible.")
 
@@ -223,7 +223,7 @@ else:
     fig = px.imshow(piv, aspect="auto", color_continuous_scale="Blues",
                     labels=dict(x="Hour", y="", color="Crashes"))
     fig.update_layout(height=360, margin=dict(t=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
 
 # ------------------------------------------------------- 8-9. geography
 st.subheader("8. Where crashes cluster")
@@ -236,7 +236,7 @@ else:
                          zoom=9, height=520, map_style="carto-positron",
                          hover_data={"crashes": True, "killed": True})
     fig.update_layout(margin=dict(l=0, r=0, t=10, b=0))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
     st.caption(f"Binned to ~100m cells ({len(geo):,} cells), not raw points. "
                "Plotting every crash individually hangs the browser.")
 
@@ -251,7 +251,7 @@ else:
                      hover_data=["street", "borough", "killed"],
                      labels={"injured": "People injured", "crash_date": "", "outcome": ""})
     fig.update_layout(height=400, margin=dict(t=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
     st.caption("Every fatal crash, plus a bounded sample of injury-only crashes. "
                "An unweighted sample would render almost no fatalities.")
 
