@@ -43,14 +43,27 @@ lo, hi = date_bounds(con)
 # ------------------------------------------------------------------- sidebar
 with st.sidebar:
     st.header("Filters")
-    # Bounds derive from the DATA, never from today(). The feed stopped
-    # 2026-06-11; a "last 30 days" default would return zero rows.
-    date_from, date_to = st.date_input(
+    # Bounds derive from the DATA, never from today(), so a range that returns
+    # zero rows cannot be selected.
+    picked = st.date_input(
         "Date range", value=(lo, hi), min_value=lo, max_value=hi,
-        help=f"Data covers {lo} to {hi}. Bounds come from the data, not today.",
-    ) if True else (lo, hi)
-    if isinstance(date_from, tuple):        # Streamlit returns a tuple mid-edit
-        date_from, date_to = date_from
+        help=f"Data covers {lo:%Y-%m-%d} to {hi:%Y-%m-%d}. Bounds come from the "
+             f"data, not from today.",
+    )
+    # st.date_input in range mode returns a 1-TUPLE between the first and second
+    # click. Unpacking straight into two names raises
+    # "ValueError: not enough values to unpack (expected 2, got 1)" and replaces
+    # the whole dashboard with a traceback — on the first click of the only
+    # filter in the app. Normalise the shape BEFORE unpacking, not after.
+    if isinstance(picked, (list, tuple)):
+        if len(picked) >= 2:
+            date_from, date_to = picked[0], picked[1]
+        elif len(picked) == 1:
+            date_from = date_to = picked[0]   # mid-selection: show that one day
+        else:
+            date_from, date_to = lo, hi       # cleared: fall back to full range
+    else:
+        date_from = date_to = picked          # single date object
     st.caption(f"Source: {src.label}")
 
 build_view(con, date_from, date_to)
